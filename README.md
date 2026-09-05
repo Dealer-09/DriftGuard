@@ -2,7 +2,7 @@
 
 **Container & Kubernetes Misconfiguration Scanner**
 
-DriftGuard is the only scanner that cross-checks your **Dockerfile** against your **Kubernetes manifest** — catching where K8s silently undoes your Dockerfile security hardening. Built on top of [RepoShield-CLI](https://github.com/Dealer-09/RepoShield-CLI).
+DriftGuard is the only scanner that cross-checks your **Dockerfile** against your **Kubernetes manifest** — catching where K8s silently undoes your Dockerfile security hardening.
 
 ---
 
@@ -43,7 +43,7 @@ K8s manifest says: runAsUser: 0        (root — your hardening is void)
 - **Intent Preservation Score** — How well K8s honours Dockerfile security intent (0–100)
 
 ### CVE Correlation
-Each finding is enriched with the CVEs that the misconfiguration makes exploitable — CVE ID, CVSS score, exploit summary, and MITRE ATT&CK technique tag.
+Each finding is enriched with verified CVEs or attack-class entries that the misconfiguration enables — CVE ID, CVSS score, exploit summary, and MITRE ATT&CK technique tag.
 
 ### Gemini AI Enrichment
 Gemini 2.5 Flash generates:
@@ -58,14 +58,14 @@ Results appear instantly with fallback explanations — AI enrichment updates th
 ## Getting Started
 
 ### Prerequisites
-- [Bun](https://bun.sh) (used as runtime + package manager)
+- [Bun](https://bun.sh) (runtime + package manager)
 - A [Gemini API key](https://aistudio.google.com/)
 
 ### Setup
 
 ```bash
-git clone https://github.com/Dealer-09/RepoShield-CLI
-cd RepoShield-CLI/driftguard
+git clone https://github.com/Dealer-09/DriftGuard
+cd DriftGuard
 
 bun install
 
@@ -86,11 +86,11 @@ Open `http://localhost:5173` and click **Load demo files** to see the drift engi
 driftguard/
 ├── src/
 │   ├── lib/
-│   │   ├── scoring.js          # Ported from cli/scoring.py (same log formula)
+│   │   ├── scoring.js          # Risk scoring engine
 │   │   ├── dockerfileParser.js # Line-based regex parser
 │   │   ├── k8sParser.js        # js-yaml multi-doc parser
 │   │   ├── gemini.js           # Gemini 2.5 Flash, JSON output + fallbacks
-│   │   └── cveMap.js           # Misconfiguration → CVE correlation map
+│   │   └── cveMap.js           # Misconfiguration → CVE / attack-class map
 │   ├── rules/
 │   │   ├── standalone.js       # 13 Dockerfile + K8s checks
 │   │   └── drift.js            # 7 cross-artifact drift rules
@@ -118,20 +118,20 @@ driftguard/
 | Styling | Tailwind CSS v4 |
 | YAML parsing | js-yaml |
 | AI | Gemini 2.5 Flash via @google/genai |
-| Scoring engine | Ported from `cli/scoring.py` |
 
 ---
 
-## Scoring (reused from RepoShield CLI)
-
-The scoring engine in `src/lib/scoring.js` is a direct JavaScript port of `cli/scoring.py`:
+## Scoring
 
 ```
-risk_score = log2(1 + weighted_sum) × 2     capped at 10.0
-hardening_score = max(0, 100 - risk_score × 10)
-intent_score = max(0, 100 - drift_penalty)   (2.5× weight vs standalone)
+risk_score        = log2(1 + weighted_sum) × 2     capped at 10.0
+hardening_score   = max(0, 100 - risk_score × 10)
+intent_score      = max(0, 100 - drift_penalty)    (2.5× weight vs standalone)
 ```
+
+Severity weights: `CRITICAL=10, HIGH=5, MEDIUM=2, LOW=0.5`
+Type diversity bonus applied when multiple finding categories are detected.
 
 ---
 
-*Part of [RepoShield-CLI](https://github.com/Dealer-09/RepoShield-CLI) — Zero-Trust Git & Container Security.*
+*Built by [Dealer-09](https://github.com/Dealer-09)*

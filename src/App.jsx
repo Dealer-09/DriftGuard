@@ -96,10 +96,10 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <span className="hidden sm:block text-xs text-gray-400">
-              Powered by Gemini · Built on RepoShield
+              Powered by Gemini 2.5 Flash
             </span>
             <a
-              href="https://github.com/Dealer-09/RepoShield-CLI"
+              href="https://github.com/Dealer-09/DriftGuard"
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-gray-400 hover:text-gray-700 transition-colors border border-gray-200 rounded px-2 py-1"
@@ -161,8 +161,9 @@ export default function App() {
             DriftGuard — Container & Kubernetes Misconfiguration Scanner
           </p>
           <p className="text-xs text-gray-300">
-            Built on <span className="text-gray-400">RepoShield-CLI</span> · Scoring engine ported from{' '}
-            <code className="font-mono text-gray-400">cli/scoring.py</code>
+            Built by{' '}
+            <a href="https://github.com/Dealer-09" className="text-gray-400 hover:text-gray-600">Dealer-09</a>
+            {' '}· Powered by Gemini 2.5 Flash
           </p>
         </div>
       </footer>

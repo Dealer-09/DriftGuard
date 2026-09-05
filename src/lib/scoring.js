@@ -1,7 +1,7 @@
 /**
- * Risk Scoring Engine — ported from cli/scoring.py
+ * Risk Scoring Engine
  * Calculates a 0.0–10.0 score from normalized findings.
- * Same weighted-severity × confidence × type-diversity logic as RepoShield CLI.
+ * Weighted-severity × confidence × type-diversity, log-normalised to 0–10.
  */
 
 export const SEVERITY_WEIGHTS = {
