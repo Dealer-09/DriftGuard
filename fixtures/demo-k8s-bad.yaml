@@ -1,0 +1,66 @@
+# ─── K8S MANIFEST THAT SILENTLY UNDOES THE DOCKERFILE HARDENING ────────
+#
+# This manifest deploys the "hardened" Dockerfile but undoes:
+#   ✗ DRIFT-01: Runs as root (overrides Dockerfile USER appuser)
+#   ✗ DRIFT-02: hostNetwork:true (nullifies the EXPOSE 3000 isolation)
+#   ✗ DRIFT-03: Uses :latest tag (Dockerfile was pinned to node:20.11.0)
+#   ✗ DRIFT-04: No liveness/readiness probes (Dockerfile had HEALTHCHECK)
+#   ✗ DRIFT-06: Injects literal secrets (Dockerfile had none)
+# Plus standalone K8s findings:
+#   ✗ K8S-01: privileged:true
+#   ✗ K8S-05: Literal secrets in env
+#   ✗ K8S-07: allowPrivilegeEscalation not false
+#   ✗ K8S-08: No readOnlyRootFilesystem
+# ────────────────────────────────────────────────────────────────────────
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  namespace: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+    spec:
+      # DRIFT-02: hostNetwork nullifies EXPOSE port isolation from Dockerfile
+      hostNetwork: true
+      hostPID: false
+      containers:
+        - name: demo-app
+          # DRIFT-03: Dockerfile pins to node:20.11.0-alpine3.19, this uses :latest
+          image: myapp:latest
+          ports:
+            - containerPort: 3000
+
+          # DRIFT-06: Dockerfile has zero secrets, this injects them as plain text
+          env:
+            - name: DB_PASSWORD
+              value: "prod-db-password-123"
+            - name: API_SECRET_KEY
+              value: "sk-prod-api-key-abc123"
+            - name: JWT_TOKEN_SECRET
+              value: "super-secret-jwt-signing-key"
+
+          # No liveness or readiness probe — DRIFT-04 (Dockerfile had HEALTHCHECK)
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          securityContext:
+            # K8S-01: privileged:true + DRIFT-05 (distroless-like base)
+            privileged: true
+            # DRIFT-01: No runAsNonRoot / runAsUser — overrides Dockerfile USER appuser
+            # K8S-07: allowPrivilegeEscalation not set to false
+            allowPrivilegeEscalation: true
+            # K8S-08: No readOnlyRootFilesystem

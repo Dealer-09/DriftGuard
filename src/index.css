@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #ffffff;
+  --surface: #f9f9f9;
+  --border: #e5e5e5;
+  --border-strong: #222222;
+  --text: #111111;
+  --text-muted: #888888;
+  --text-subtle: #bbbbbb;
+
+  /* Severity tones — no neon, muted and purposeful */
+  --critical: #c0392b;
+  --critical-bg: #fdf3f2;
+  --high: #d35400;
+  --high-bg: #fdf6f0;
+  --medium: #b8860b;
+  --medium-bg: #fdf9ee;
+  --low: #555555;
+  --low-bg: #f5f5f5;
+
+  /* Drift accent — cool slate to stand out from standalone */
+  --drift: #1a1a2e;
+  --drift-bg: #f0f0f8;
+  --drift-badge: #2c2c6e;
+}
+
+body {
+  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+textarea {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 12.5px;
+}
+
+pre, code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 12px;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
