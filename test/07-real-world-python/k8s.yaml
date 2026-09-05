@@ -1,0 +1,83 @@
+# Scenario 07 — Real-world Python / FastAPI Service K8s
+# Issues: K8S-05 (SECRET_KEY as literal value), K8S-07 (no allowPrivilegeEscalation:false),
+#         K8S-08 (no readOnlyRootFilesystem), DRIFT-06 (secrets injected by K8s)
+# Multi-doc: Deployment + HorizontalPodAutoscaler
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-service
+  namespace: default
+  labels:
+    app: fastapi-service
+    team: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fastapi-service
+  template:
+    metadata:
+      labels:
+        app: fastapi-service
+    spec:
+      containers:
+        - name: fastapi
+          image: myregistry.io/fastapi-service:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: url
+            - name: SECRET_KEY
+              value: "my-super-secret-jwt-key-hardcoded"
+            - name: ENVIRONMENT
+              value: "production"
+            - name: REDIS_PASSWORD
+              value: "redis-password-123"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fastapi-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fastapi-service
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

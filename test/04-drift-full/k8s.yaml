@@ -1,0 +1,41 @@
+# Scenario 04 — All 7 Drift Rules Fire
+# This K8s manifest silently undoes every hardening measure in the Dockerfile.
+#
+# DRIFT-01: runAsUser:0 overrides Dockerfile USER nonroot
+# DRIFT-02: hostNetwork:true nullifies EXPOSE 8080 isolation
+# DRIFT-03: image:latest contradicts Dockerfile's pinned distroless base
+# DRIFT-04: No livenessProbe/readinessProbe despite Dockerfile HEALTHCHECK
+# DRIFT-05: privileged:true + capabilities.add negates distroless image
+# DRIFT-06: Literal DB_PASSWORD secret despite Dockerfile having none
+# DRIFT-07: No readOnlyRootFilesystem despite distroless implying read-only intent
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: all-drift-app
+  namespace: production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: all-drift-app
+  template:
+    metadata:
+      labels:
+        app: all-drift-app
+    spec:
+      hostNetwork: true
+      containers:
+        - name: app
+          image: myapp:latest
+          env:
+            - name: DB_PASSWORD
+              value: "drifted-secret-value"
+            - name: AUTH_TOKEN
+              value: "hardcoded-auth-token-xyz"
+          securityContext:
+            privileged: true
+            runAsUser: 0
+            allowPrivilegeEscalation: true
+            capabilities:
+              add: ["SYS_ADMIN", "NET_ADMIN"]

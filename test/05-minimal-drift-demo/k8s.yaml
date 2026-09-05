@@ -1,0 +1,36 @@
+# Scenario 05 — Minimal Drift Demo
+# DRIFT-01: Dockerfile USER app → K8s has no runAsNonRoot (runs as root)
+# DRIFT-03: Dockerfile FROM node:20.11.0-alpine3.19 → K8s deploys :latest
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minimal-drift-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minimal-drift-app
+  template:
+    metadata:
+      labels:
+        app: minimal-drift-app
+    spec:
+      containers:
+        - name: app
+          image: myapp:latest
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 15

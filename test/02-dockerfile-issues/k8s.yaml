@@ -1,0 +1,32 @@
+# Scenario 02 — Neutral K8s (testing Dockerfile issues only)
+# Reasonably configured K8s so only Dockerfile findings fire.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dockerfile-issues-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dockerfile-issues-app
+  template:
+    metadata:
+      labels:
+        app: dockerfile-issues-app
+    spec:
+      containers:
+        - name: app
+          image: myapp:1.0.0
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000

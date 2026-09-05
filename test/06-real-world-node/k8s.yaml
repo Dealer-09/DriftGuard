@@ -1,0 +1,65 @@
+# Scenario 06 — Real-world Node.js Microservice K8s
+# Issues: DRIFT-01 (USER nodeuser but no runAsNonRoot), DRIFT-04 (no probes despite intent),
+#         K8S-03 (requests missing), K8S-08 (no readOnlyRootFilesystem)
+#
+# This is the kind of config a real team ships — looks mostly fine at a glance.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-api
+  namespace: production
+  labels:
+    app: node-api
+    version: "2.1.0"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: node-api
+  template:
+    metadata:
+      labels:
+        app: node-api
+    spec:
+      containers:
+        - name: node-api
+          image: myregistry.io/node-api:2.1.0
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "8080"
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: db-host
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          securityContext:
+            allowPrivilegeEscalation: false
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-api-svc
+  namespace: production
+spec:
+  selector:
+    app: node-api
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP

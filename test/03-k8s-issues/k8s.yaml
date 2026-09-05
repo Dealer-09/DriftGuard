@@ -1,0 +1,41 @@
+# Scenario 03 — All K8s Issues
+# Expected standalone K8s findings:
+#   K8S-01: privileged: true
+#   K8S-02: No runAsNonRoot / running as root
+#   K8S-03: Missing resource limits
+#   K8S-04: Image uses :latest
+#   K8S-05: Literal secret in env (DB_PASSWORD, API_KEY)
+#   K8S-06a: hostNetwork: true
+#   K8S-06b: hostPID: true
+#   K8S-07: allowPrivilegeEscalation not false
+#   K8S-08: No readOnlyRootFilesystem
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: all-k8s-issues
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: all-k8s-issues
+  template:
+    metadata:
+      labels:
+        app: all-k8s-issues
+    spec:
+      hostNetwork: true
+      hostPID: true
+      containers:
+        - name: app
+          image: myapp:latest
+          env:
+            - name: DB_PASSWORD
+              value: "plaintext-password"
+            - name: API_SECRET_KEY
+              value: "exposed-api-key-123"
+          securityContext:
+            privileged: true
+            runAsUser: 0
+            allowPrivilegeEscalation: true

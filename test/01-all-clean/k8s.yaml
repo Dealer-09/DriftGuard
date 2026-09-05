@@ -1,0 +1,59 @@
+# Scenario 01 — All Clean K8s Manifest
+# Expected: No findings. Fully honours all Dockerfile hardening.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clean-app
+  namespace: production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: clean-app
+  template:
+    metadata:
+      labels:
+        app: clean-app
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+        - name: clean-app
+          image: myapp:1.2.3
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: password
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop: ["ALL"]
